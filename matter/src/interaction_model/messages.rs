@@ -73,6 +73,51 @@ pub mod msg {
 
     use super::ib::{self, AttrData, AttrPath, AttrResp, AttrStatus, CmdData, DataVersionFilter};
 
+    #[derive(FromTLV)]
+    #[tlvargs(lifetime = "'a")]
+    pub struct SubscribeReq<'a> {
+        pub keep_subs: bool,
+        pub min_int_floor: u16,
+        pub max_int_ceil: u16,
+        pub attr_requests: Option<TLVArray<'a, AttrPath>>,
+        event_requests: Option<bool>,
+        event_filters: Option<bool>,
+        // The Context Tags are discontiguous for some reason
+        _dummy: Option<bool>,
+        pub fabric_filtered: bool,
+        pub dataver_filters: Option<TLVArray<'a, DataVersionFilter>>,
+    }
+
+    impl<'a> SubscribeReq<'a> {
+        pub fn to_read_req(&self) -> ReadReq<'a> {
+            ReadReq {
+                attr_requests: self.attr_requests,
+                event_requests: self.event_requests,
+                event_filters: self.event_filters,
+                fabric_filtered: self.fabric_filtered,
+                dataver_filters: self.dataver_filters,
+            }
+        }
+    }
+
+    #[derive(ToTLV)]
+    pub struct SubscribeResp {
+        pub subs_id: u32,
+        // The Context Tags are discontiguous for some reason
+        _dummy: Option<u32>,
+        pub max_int: u16,
+    }
+
+    impl SubscribeResp {
+        pub fn new(subs_id: u32, max_int: u16) -> Self {
+            Self {
+                subs_id,
+                _dummy: None,
+                max_int,
+            }
+        }
+    }
+
     #[derive(FromTLV, ToTLV)]
     pub struct TimedReq {
         pub timeout: u16,
@@ -172,7 +217,7 @@ pub mod msg {
     }
 
     pub enum ReportDataTag {
-        _SubscriptionId = 0,
+        SubscriptionId = 0,
         AttributeReports = 1,
         _EventReport = 2,
         _MoreChunkedMsgs = 3,
