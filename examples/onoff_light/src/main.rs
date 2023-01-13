@@ -35,6 +35,7 @@ fn main() {
         pid: 0x8002,
         hw_ver: 2,
         sw_ver: 1,
+        sw_ver_str: "1".to_string(),
         serial_no: "aabbccdd".to_string(),
     };
     let dev_att = Box::new(dev_att::HardCodedDevAtt::new());
